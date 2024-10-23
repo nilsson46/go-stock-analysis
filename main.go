@@ -1,68 +1,43 @@
 package main
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	// PostgreSQL driver
+	"github.com/go-resty/resty/v2"
 
+	"go-stock-analysis/database"
 	"go-stock-analysis/helpers"
-	"go-stock-analysis/stocks"
 )
 
-func main() {
+type StockSearchResult struct {
+	TotalNumberOfHits int `json:"totalNumberOfHits"`
+	Hits              []struct {
+		Type       string `json:"type"`
+		Instrument struct {
+			Identifier string `json:"identifier"`
+			Name       string `json:"name"`
+			Price      struct {
+				LastPrice float64 `json:"lastPrice"`
+			} `json:"price"`
+			Symbol string `json:"symbol"`
+		} `json:"instrument"`
+	} `json:"hits"`
+}
 
-	conn, err := ConnectDB()
+func main() {
+	conn, err := database.ConnectDB()
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
-	defer conn.Close(context.Background())
+	defer conn.Close()
 
 	fmt.Println("Anslutning till PostgreSQL lyckades!")
 
-	// Create table if not exists
-	_, err = conn.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS stocks (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(50),
-		price DECIMAL,
-		symbol VARCHAR(10)
-	)`)
-	if err != nil {
-		log.Fatalf("Unable to create table: %v\n", err)
-	}
-
-	// Insert a stock entry
-	_, err = conn.Exec(context.Background(), `INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`, "Example Stock", 100.50, "EXMPL")
-	if err != nil {
-		log.Fatalf("Unable to insert stock: %v\n", err)
-	}
-
-	// Retrieve and print stock entries
-	rows, err := conn.Query(context.Background(), `SELECT name, price, symbol FROM stocks`)
-	if err != nil {
-		log.Fatalf("Unable to retrieve stocks: %v\n", err)
-	}
-	defer rows.Close()
-
-	fmt.Println("Stocks in database:")
-	for rows.Next() {
-		var name string
-		var price float64
-		var symbol string
-		err := rows.Scan(&name, &price, &symbol)
-		if err != nil {
-			log.Fatalf("Unable to scan row: %v\n", err)
-		}
-		fmt.Printf("Name: %s, Price: %.2f, Symbol: %s\n", name, price, symbol)
-	}
-
-	// Check for errors from iterating over rows.
-	if err = rows.Err(); err != nil {
-		log.Fatalf("Error encountered during rows iteration: %v\n", err)
-	}
+	database.InitializeDB(conn)
 
 	// Skapa en ny Gin-router
 	r := gin.Default()
@@ -72,7 +47,61 @@ func main() {
 
 	// Hantera en GET-förfrågan på "/stocks"
 	r.GET("/stocks", func(c *gin.Context) {
-		c.IndentedJSON(http.StatusOK, stocks.GetStocks())
+		stockList, err := database.GetStocksFromDB(conn)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.IndentedJSON(http.StatusOK, stockList)
+	})
+
+	// Hantera en POST-förfrågan på "/addstock"
+	r.POST("/addstock", func(c *gin.Context) {
+		var stock struct {
+			Name   string  `json:"name"`
+			Price  float64 `json:"price"`
+			Symbol string  `json:"symbol"`
+		}
+
+		if err := c.BindJSON(&stock); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+			return
+		}
+
+		err := database.AddStock(conn, stock.Name, stock.Price, stock.Symbol)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Stock added successfully"})
+	})
+
+	// Hantera en GET-förfrågan på "/search"
+	r.GET("/search", func(c *gin.Context) {
+		stockName := c.Query("name")
+		if stockName == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Stock name is required"})
+			return
+		}
+
+		client := resty.New()
+		apiURL := fmt.Sprintf("https://www.avanza.se/_mobile/market/search/%s", stockName)
+
+		resp, err := client.R().Get(apiURL)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data from API"})
+			return
+		}
+
+		var result StockSearchResult
+		err = json.Unmarshal(resp.Body(), &result)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse API response"})
+			return
+		}
+
+		c.IndentedJSON(http.StatusOK, result)
 	})
 
 	// Starta webbservern på port 8085

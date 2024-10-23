@@ -1,0 +1,11 @@
+GET http://localhost:8085/stocks 
+
+
+POST http://localhost:8085/addStock
+Content-Type: application/json
+
+{
+  "name": "New Stock",
+  "price": 123.45,
+  "symbol": "NEWSTK"
+}
