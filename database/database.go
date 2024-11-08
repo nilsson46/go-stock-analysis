@@ -14,18 +14,34 @@ func ConnectDB() (*pgxpool.Pool, error) {
 	return pgxpool.Connect(context.Background(), connStr)
 }
 
-// InitializeDB initializes the database by creating the necessary tables.
+// InitializeDB initializes the database by creating the necessary tables and updating the schema if needed.
 func InitializeDB(conn *pgxpool.Pool) {
+	// Create table if not exists
 	_, err := conn.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS stocks (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50),
         price DECIMAL,
-        symbol VARCHAR(10)
+        symbol VARCHAR(10), 
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        direktavkastning DECIMAL,
+        ep DECIMAL,
+        egetkapital DECIMAL
     )`)
 	if err != nil {
 		log.Fatalf("Unable to create table: %v\n", err)
 	}
 
+	// Update table schema if needed
+	_, err = conn.Exec(context.Background(), `ALTER TABLE stocks
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS direktavkastning DECIMAL,
+        ADD COLUMN IF NOT EXISTS ep DECIMAL,
+        ADD COLUMN IF NOT EXISTS egetkapital DECIMAL`)
+	if err != nil {
+		log.Fatalf("Unable to update table schema: %v\n", err)
+	}
+
+	// Insert a stock entry
 	_, err = conn.Exec(context.Background(), `INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`, "Example Stock", 100.50, "EXMPL")
 	if err != nil {
 		log.Fatalf("Unable to insert stock: %v\n", err)
@@ -64,8 +80,8 @@ func GetStocksFromDB(conn *pgxpool.Pool) ([]map[string]interface{}, error) {
 }
 
 // AddStock adds a new stock to the database.
-func AddStock(conn *pgxpool.Pool, name string, price float64, symbol string) error {
-	_, err := conn.Exec(context.Background(), `INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`, name, price, symbol)
+func AddStock(conn *pgxpool.Pool, name string, kurs float64, symbol string) error {
+	_, err := conn.Exec(context.Background(), `INSERT INTO stocks (name, kurs, symbol) VALUES ($1, $2, $3)`, name, kurs, symbol)
 	if err != nil {
 		return fmt.Errorf("unable to insert stock: %v", err)
 	}

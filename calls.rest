@@ -1,7 +1,7 @@
 GET http://localhost:8085/stocks 
 
-
-POST http://localhost:8085/addStock
+### Add Stock
+POST http://localhost:8085/addstock
 Content-Type: application/json
 
 {
