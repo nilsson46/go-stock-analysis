@@ -1,0 +1,3 @@
+Scraping could be a option... 
+
+Start to add some manually to the db or in the frontend later on. 
