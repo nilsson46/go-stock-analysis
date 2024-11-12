@@ -87,3 +87,12 @@ func AddStock(conn *pgxpool.Pool, name string, kurs float64, symbol string) erro
 	}
 	return nil
 }
+
+func StockExists(conn *pgxpool.Pool, name, symbol string) (bool, error) {
+	var exists bool
+	err := conn.QueryRow(context.Background(), `SELECT EXISTS(SELECT 1 FROM stocks WHERE name=$1 OR symbol=$2)`, name, symbol).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("unable to check if stock exists: %v", err)
+	}
+	return exists, nil
+}
