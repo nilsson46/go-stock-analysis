@@ -32,7 +32,17 @@ func AddStock(c *gin.Context) {
 		return
 	}
 
-	err := database.AddStock(conn, stock.Name, stock.Price, stock.Symbol)
+	exists, err := database.CheckStockExists(conn, stock.Name, stock.Symbol)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if exists {
+		c.JSON(http.StatusConflict, gin.H{"error": "Stock already exists"})
+		return
+	}
+
+	err = database.AddStock(conn, stock.Name, stock.Price, stock.Symbol)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
