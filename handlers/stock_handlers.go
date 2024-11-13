@@ -37,6 +37,7 @@ func AddStock(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	if exists {
 		c.JSON(http.StatusConflict, gin.H{"error": "Stock already exists"})
 		return

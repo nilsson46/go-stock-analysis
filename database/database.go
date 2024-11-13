@@ -16,7 +16,6 @@ func ConnectDB() (*pgxpool.Pool, error) {
 
 // InitializeDB initializes the database by creating the necessary tables and updating the schema if needed.
 func InitializeDB(conn *pgxpool.Pool) {
-	// Create table if not exists
 	_, err := conn.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS stocks (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50),
@@ -31,7 +30,6 @@ func InitializeDB(conn *pgxpool.Pool) {
 		log.Fatalf("Unable to create table: %v\n", err)
 	}
 
-	// Update table schema if needed
 	_, err = conn.Exec(context.Background(), `ALTER TABLE stocks
         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         ADD COLUMN IF NOT EXISTS direktavkastning DECIMAL,
@@ -41,7 +39,6 @@ func InitializeDB(conn *pgxpool.Pool) {
 		log.Fatalf("Unable to update table schema: %v\n", err)
 	}
 
-	// Insert a stock entry
 	_, err = conn.Exec(context.Background(), `INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`, "Example Stock", 100.50, "EXMPL")
 	if err != nil {
 		log.Fatalf("Unable to insert stock: %v\n", err)
@@ -80,19 +77,22 @@ func GetStocksFromDB(conn *pgxpool.Pool) ([]map[string]interface{}, error) {
 }
 
 // AddStock adds a new stock to the database.
-func AddStock(conn *pgxpool.Pool, name string, kurs float64, symbol string) error {
-	_, err := conn.Exec(context.Background(), `INSERT INTO stocks (name, kurs, symbol) VALUES ($1, $2, $3)`, name, kurs, symbol)
+func AddStock(conn *pgxpool.Pool, name string, price float64, symbol string) error {
+	_, err := conn.Exec(context.Background(), `INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`, name, price, symbol)
 	if err != nil {
 		return fmt.Errorf("unable to insert stock: %v", err)
 	}
 	return nil
 }
 
+// StockExists checks if a stock with the given name or symbol already exists.
 func StockExists(conn *pgxpool.Pool, name, symbol string) (bool, error) {
 	var exists bool
+	log.Printf("Checking if stock exists: name=%s, symbol=%s", name, symbol)
 	err := conn.QueryRow(context.Background(), `SELECT EXISTS(SELECT 1 FROM stocks WHERE name=$1 OR symbol=$2)`, name, symbol).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("unable to check if stock exists: %v", err)
 	}
+	log.Printf("Stock exists: %v", exists)
 	return exists, nil
 }
