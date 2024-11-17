@@ -2,54 +2,71 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-// ConnectDB establishes a connection to the PostgreSQL database using pgx.
+// ConnectDB ansluter till PostgreSQL-databasen
 func ConnectDB() (*pgxpool.Pool, error) {
-	connStr := "postgres://postgres:1234@localhost:5433/stock_analysis_db?sslmode=disable"
-	return pgxpool.Connect(context.Background(), connStr)
+	conn, err := pgxpool.Connect(context.Background(), "postgres://postgres:1234@localhost:5432/stock_analysis_db?sslmode=disable")
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }
 
-// InitializeDB initializes the database by creating the necessary tables and updating the schema if needed.
+// InitializeDB initialiserar databasen
 func InitializeDB(conn *pgxpool.Pool) {
-	_, err := conn.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS stocks (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(50),
-        price DECIMAL,
-        symbol VARCHAR(10), 
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        direktavkastning DECIMAL,
-        ep DECIMAL,
-        egetkapital DECIMAL
-    )`)
-	if err != nil {
-		log.Fatalf("Unable to create table: %v\n", err)
-	}
-
-	_, err = conn.Exec(context.Background(), `ALTER TABLE stocks
-        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        ADD COLUMN IF NOT EXISTS direktavkastning DECIMAL,
-        ADD COLUMN IF NOT EXISTS ep DECIMAL,
-        ADD COLUMN IF NOT EXISTS egetkapital DECIMAL`)
-	if err != nil {
-		log.Fatalf("Unable to update table schema: %v\n", err)
-	}
-
-	_, err = conn.Exec(context.Background(), `INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`, "Example Stock", 100.50, "EXMPL")
-	if err != nil {
-		log.Fatalf("Unable to insert stock: %v\n", err)
-	}
+	// Lägg till eventuell initialisering av databasen här
 }
 
-// GetStocksFromDB retrieves all stocks from the database.
-func GetStocksFromDB(conn *pgxpool.Pool) ([]map[string]interface{}, error) {
-	rows, err := conn.Query(context.Background(), `SELECT name, price, symbol FROM stocks`)
+// StockExists kontrollerar om en aktie med samma namn eller symbol redan finns i databasen
+func StockExists(conn *pgxpool.Pool, name, symbol string) (bool, error) {
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM stocks WHERE name=$1 OR symbol=$2)`
+	err := conn.QueryRow(context.Background(), query, name, symbol).Scan(&exists)
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve stocks: %v", err)
+		log.Printf("Error checking if stock exists: %v", err)
+	}
+	return exists, err
+}
+
+// AddStock lägger till en ny aktie i databasen
+func AddStock(conn *pgxpool.Pool, name string, price float64, symbol string) error {
+	query := `INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`
+	_, err := conn.Exec(context.Background(), query, name, price, symbol)
+	if err != nil {
+		log.Printf("Error adding stock: %v", err)
+	}
+	return err
+}
+
+// GetStock hämtar en specifik aktie baserat på dess namn eller symbol
+func GetStock(conn *pgxpool.Pool, name, symbol string) (map[string]interface{}, error) {
+	var stock map[string]interface{}
+	query := `SELECT name, price, symbol FROM stocks WHERE name=$1 OR symbol=$2`
+	row := conn.QueryRow(context.Background(), query, name, symbol)
+	var stockName string
+	var stockPrice float64
+	var stockSymbol string
+	err := row.Scan(&stockName, &stockPrice, &stockSymbol)
+	if err != nil {
+		return nil, err
+	}
+	stock = map[string]interface{}{
+		"name":   stockName,
+		"price":  stockPrice,
+		"symbol": stockSymbol,
+	}
+	return stock, nil
+}
+
+// GetStocksFromDB hämtar alla aktier från databasen
+func GetStocksFromDB(conn *pgxpool.Pool) ([]map[string]interface{}, error) {
+	rows, err := conn.Query(context.Background(), "SELECT name, price, symbol FROM stocks")
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -60,7 +77,7 @@ func GetStocksFromDB(conn *pgxpool.Pool) ([]map[string]interface{}, error) {
 		var symbol string
 		err := rows.Scan(&name, &price, &symbol)
 		if err != nil {
-			return nil, fmt.Errorf("unable to scan row: %v", err)
+			return nil, err
 		}
 		stocks = append(stocks, map[string]interface{}{
 			"name":   name,
@@ -68,31 +85,5 @@ func GetStocksFromDB(conn *pgxpool.Pool) ([]map[string]interface{}, error) {
 			"symbol": symbol,
 		})
 	}
-
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error encountered during rows iteration: %v", err)
-	}
-
 	return stocks, nil
-}
-
-// AddStock adds a new stock to the database.
-func AddStock(conn *pgxpool.Pool, name string, price float64, symbol string) error {
-	_, err := conn.Exec(context.Background(), `INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`, name, price, symbol)
-	if err != nil {
-		return fmt.Errorf("unable to insert stock: %v", err)
-	}
-	return nil
-}
-
-// StockExists checks if a stock with the given name or symbol already exists.
-func StockExists(conn *pgxpool.Pool, name, symbol string) (bool, error) {
-	var exists bool
-	log.Printf("Checking if stock exists: name=%s, symbol=%s", name, symbol)
-	err := conn.QueryRow(context.Background(), `SELECT EXISTS(SELECT 1 FROM stocks WHERE name=$1 OR symbol=$2)`, name, symbol).Scan(&exists)
-	if err != nil {
-		return false, fmt.Errorf("unable to check if stock exists: %v", err)
-	}
-	log.Printf("Stock exists: %v", exists)
-	return exists, nil
 }

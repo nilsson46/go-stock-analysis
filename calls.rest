@@ -5,7 +5,7 @@ POST http://localhost:8085/addstock
 Content-Type: application/json
 
 {
-  "name": "New Stock",
-  "price": 123.45,
-  "symbol": "NEWSTK"
+  "name": "Example Stock",
+    "price": 100.5,
+    "symbol": "EXMPL"
 }

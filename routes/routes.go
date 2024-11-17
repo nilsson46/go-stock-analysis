@@ -11,7 +11,7 @@ func SetupRouter(router *gin.Engine) {
 
 	router.GET("/", helpers.WelcomeMessage)
 
-	router.GET("/stocks", handlers.GetStocks)
+	router.GET("/stocks", handlers.GetStock)
 
 	router.POST("/addstock", handlers.AddStock)
 }

@@ -1,24 +1,14 @@
 package handlers
 
 import (
-	"net/http"
-
 	"go-stock-analysis/database"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func GetStocks(c *gin.Context) {
-	conn := c.MustGet("db").(*pgxpool.Pool)
-	stockList, err := database.GetStocksFromDB(conn)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.IndentedJSON(http.StatusOK, stockList)
-}
-
+// AddStock lägger till en ny aktie
 func AddStock(c *gin.Context) {
 	conn := c.MustGet("db").(*pgxpool.Pool)
 	var stock struct {
@@ -32,6 +22,13 @@ func AddStock(c *gin.Context) {
 		return
 	}
 
+	// Kontrollera att alla parametrar är fyllda
+	if stock.Name == "" || stock.Symbol == "" || stock.Price == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
+		return
+	}
+
+	// Kontrollera om namnet eller symbolen redan finns i databasen
 	exists, err := database.StockExists(conn, stock.Name, stock.Symbol)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -39,7 +36,7 @@ func AddStock(c *gin.Context) {
 	}
 
 	if exists {
-		c.JSON(http.StatusConflict, gin.H{"error": "Stock already exists"})
+		c.JSON(http.StatusConflict, gin.H{"error": "Stock with the same name or symbol already exists"})
 		return
 	}
 
@@ -50,4 +47,40 @@ func AddStock(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Stock added successfully"})
+}
+
+// GetStock hämtar en specifik aktie baserat på dess namn eller symbol
+func GetStock(c *gin.Context) {
+	conn := c.MustGet("db").(*pgxpool.Pool)
+	name := c.Query("name")
+	symbol := c.Query("symbol")
+
+	if name == "" && symbol == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Name or symbol is required"})
+		return
+	}
+
+	stock, err := database.GetStock(conn, name, symbol)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if stock == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Stock not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, stock)
+}
+
+// GetAllStocks hämtar alla aktier från databasen
+func GetAllStocks(c *gin.Context) {
+	conn := c.MustGet("db").(*pgxpool.Pool)
+	stocks, err := database.GetStocksFromDB(conn)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, stocks)
 }

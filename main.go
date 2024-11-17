@@ -10,6 +10,7 @@ import (
 	"github.com/go-resty/resty/v2"
 
 	"go-stock-analysis/database"
+	"go-stock-analysis/handlers"
 	"go-stock-analysis/helpers"
 )
 
@@ -42,68 +43,46 @@ func main() {
 	// Skapa en ny Gin-router
 	r := gin.Default()
 
-	// Hantera en GET-förfrågan på roten ("/")
+	// Middleware för att lägga till databaskopplingen i context
+	r.Use(func(c *gin.Context) {
+		c.Set("db", conn)
+		c.Next()
+	})
+
+	// Definiera dina routes
 	r.GET("/", helpers.WelcomeMessage)
-
-	// Hantera en GET-förfrågan på "/stocks"
-	r.GET("/stocks", func(c *gin.Context) {
-		stockList, err := database.GetStocksFromDB(conn)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.IndentedJSON(http.StatusOK, stockList)
-	})
-
-	// Hantera en POST-förfrågan på "/addstock"
-	r.POST("/addstock", func(c *gin.Context) {
-		var stock struct {
-			Name   string  `json:"name"`
-			Price  float64 `json:"price"`
-			Symbol string  `json:"symbol"`
-		}
-
-		if err := c.BindJSON(&stock); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-			return
-		}
-
-		err := database.AddStock(conn, stock.Name, stock.Price, stock.Symbol)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Stock added successfully"})
-	})
-
-	// Hantera en GET-förfrågan på "/search"
-	r.GET("/search", func(c *gin.Context) {
-		stockName := c.Query("name")
-		if stockName == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Stock name is required"})
-			return
-		}
-
-		client := resty.New()
-		apiURL := fmt.Sprintf("https://www.avanza.se/_mobile/market/search/%s", stockName)
-
-		resp, err := client.R().Get(apiURL)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data from API"})
-			return
-		}
-
-		var result StockSearchResult
-		err = json.Unmarshal(resp.Body(), &result)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse API response"})
-			return
-		}
-
-		c.IndentedJSON(http.StatusOK, result)
-	})
+	r.GET("/stocks", handlers.GetAllStocks)
+	r.POST("/addstock", handlers.AddStock)
+	r.GET("/getstock", handlers.GetStock)
+	r.GET("/search", searchStockHandler)
 
 	// Starta webbservern på port 8085
 	r.Run(":8085")
+}
+
+// searchStockHandler hanterar en GET-förfrågan på "/search"
+func searchStockHandler(c *gin.Context) {
+	stockName := c.Query("name")
+	if stockName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Stock name is required"})
+		return
+	}
+
+	client := resty.New()
+	apiURL := fmt.Sprintf("https://www.avanza.se/_mobile/market/search/%s", stockName)
+
+	resp, err := client.R().Get(apiURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data from API"})
+		return
+	}
+
+	var result StockSearchResult
+	err = json.Unmarshal(resp.Body(), &result)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse API response"})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, result)
 }
