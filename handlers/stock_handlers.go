@@ -84,3 +84,21 @@ func GetAllStocks(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, stocks)
 }
+
+// DeleteStock tar bort en aktie från databasen
+func DeleteStock(c *gin.Context) {
+	conn := c.MustGet("db").(*pgxpool.Pool)
+	name := c.Query("name")
+	symbol := c.Query("symbol")
+
+	if name == "" && symbol == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Name or symbol is required"})
+		return
+	}
+
+	err := database.DeleteStock(conn, name, symbol)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+}

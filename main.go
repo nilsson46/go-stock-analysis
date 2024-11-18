@@ -10,8 +10,7 @@ import (
 	"github.com/go-resty/resty/v2"
 
 	"go-stock-analysis/database"
-	"go-stock-analysis/handlers"
-	"go-stock-analysis/helpers"
+	"go-stock-analysis/routes"
 )
 
 type StockSearchResult struct {
@@ -48,13 +47,7 @@ func main() {
 		c.Set("db", conn)
 		c.Next()
 	})
-
-	// Definiera dina routes
-	r.GET("/", helpers.WelcomeMessage)
-	r.GET("/stocks", handlers.GetAllStocks)
-	r.POST("/addstock", handlers.AddStock)
-	r.GET("/getstock", handlers.GetStock)
-	r.GET("/search", searchStockHandler)
+	routes.SetupRouter(r)
 
 	// Starta webbservern på port 8085
 	r.Run(":8085")

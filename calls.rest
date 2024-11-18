@@ -9,3 +9,6 @@ Content-Type: application/json
     "price": 100.5,
     "symbol": "EXMPL"
 }
+
+### Delete Stock
+DELETE http://localhost:8085/deletestock?symbol=TST

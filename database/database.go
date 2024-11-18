@@ -87,3 +87,13 @@ func GetStocksFromDB(conn *pgxpool.Pool) ([]map[string]interface{}, error) {
 	}
 	return stocks, nil
 }
+
+// DeleteStock tar bort en aktie från databasen
+func DeleteStock(conn *pgxpool.Pool, name, symbol string) error {
+	query := `DELETE FROM stocks WHERE name=$1 OR symbol=$2`
+	_, err := conn.Exec(context.Background(), query, name, symbol)
+	if err != nil {
+		log.Printf("Error deleting stock: %v", err)
+	}
+	return err
+}
