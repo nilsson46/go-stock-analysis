@@ -3,13 +3,18 @@ package database
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 // ConnectDB ansluter till PostgreSQL-databasen
 func ConnectDB() (*pgxpool.Pool, error) {
-	conn, err := pgxpool.Connect(context.Background(), "postgres://postgres:1234@localhost:5432/stock_analysis_db?sslmode=disable")
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		log.Fatalf("DATABASE_URL is not set")
+	}
+	conn, err := pgxpool.Connect(context.Background(), databaseUrl)
 	if err != nil {
 		return nil, err
 	}

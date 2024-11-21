@@ -85,7 +85,7 @@ func GetAllStocks(c *gin.Context) {
 	c.JSON(http.StatusOK, stocks)
 }
 
-// DeleteStock tar bort en aktie från databasen
+// DeleteStock tar bort en aktie baserat på dess namn eller symbol
 func DeleteStock(c *gin.Context) {
 	conn := c.MustGet("db").(*pgxpool.Pool)
 	name := c.Query("name")
@@ -101,4 +101,6 @@ func DeleteStock(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Stock deleted successfully"})
 }
