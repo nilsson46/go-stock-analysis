@@ -10,5 +10,5 @@ Content-Type: application/json
     "symbol": "EXMPL"
 }
 
-### Delete Stock
+### Delete Stock by symbol
 DELETE http://localhost:8085/deletestock?symbol=TST

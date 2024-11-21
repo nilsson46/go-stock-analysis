@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    image: simonnilsson584/stock-analysis:latest
+    ports:
+      - "8085:8085"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://postgres:1234@db:5432/stock_analysis_db?sslmode=disable
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: stock_analysis_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
