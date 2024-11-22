@@ -1,29 +1,17 @@
-# Use the official Golang image to create a build artifact.
-FROM golang:1.17 as builder
+FROM golang:alpine AS builder
 
-# Set the Current Working Directory inside the container
-WORKDIR /app
-
-# Copy go mod and sum files
-COPY go.mod go.sum ./
-
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
-RUN go mod download
-
-# Copy the source from the current directory to the Working Directory inside the container
+RUN apk update && apk add --no-cache git
+WORKDIR $GOPATH/src/mypackage/myapp/
 COPY . .
 
-# Build the Go app
-RUN go build -o stock-analysis ./cmd
+RUN go get -d -v
 
-# Start a new stage from scratch
-FROM alpine:latest  
+RUN go build -o /app/cmd/stock-analysis
+FROM scratch
 
-# Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/stock-analysis /stock-analysis
+COPY --from=builder /app/cmd/stock-analysis /stock-analysis
+COPY *.yml ./ 
 
-# Expose port 8085 to the outside world
-EXPOSE 8085
 
-# Command to run the executable
-CMD ["/stock-analysis"]
+EXPOSE 8080
+ENTRYPOINT ["/stock-analysis"]
