@@ -37,7 +37,6 @@ func main() {
 	r.POST("/addstock", handlers.AddStock)
 	r.GET("/getstock", handlers.GetStock)
 	r.DELETE("/deletestock", handlers.DeleteStock)
-	r.PUT("/updatestock", handlers.UpdateStock)
 
 	// Starta webbservern på port 8085
 	r.Run(":8085")
