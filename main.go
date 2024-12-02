@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"go-stock-analysis/database"
 	"go-stock-analysis/handlers"
 	"go-stock-analysis/helpers"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,6 +26,15 @@ func main() {
 
 	// Skapa en ny Gin-router
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// Middleware för att lägga till databaskopplingen i context
 	r.Use(func(c *gin.Context) {
