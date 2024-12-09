@@ -18,3 +18,16 @@ kubectl --kubeconfig=.\kubeconfig.yaml apply -f .\pvc.yaml
 Möjlighet till databas i en Persistent volume. 
 
 
+kubectl --kubeconfig=.\stock-analysis-kubeconfig.yaml apply -f .\postgresql.yaml 
+
+Ingress controller IP: 172.233.35.72
+kubectl --kubeconfig=./kubeconfig.yaml  apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.3.1/deploy/static/provider/cloud/deploy.yaml
+kubectl --kubeconfig=./stock-analysis-kubeconfig.yaml  get all -n ingress-nginx 
+
+run it 
+docker build -t simonnilsson584/backend:latest .
+docker-compose up
+
+
+
+docker build -t simonnilsson584/backend:latest .

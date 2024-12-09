@@ -1,0 +1,12 @@
+#Database credentials 
+
+database: 
+  file: ""
+  sql-user: "postgres"
+  sql-pass: "1234"
+  sql-server: "postgresserver"
+  sql-database: "Stocks"
+  sql-port: "5432"
+
+redis: 
+  server: "localhost:6379"

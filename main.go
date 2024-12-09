@@ -48,6 +48,9 @@ func main() {
 	r.POST("/addstock", handlers.AddStock)
 	r.GET("/getstock", handlers.GetStock)
 	r.DELETE("/deletestock", handlers.DeleteStock)
+	r.GET("/healthz", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
 
 	// Starta webbservern på port 8085
 	r.Run(":8085")
