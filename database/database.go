@@ -1,9 +1,11 @@
+// database/database.go
 package database
 
 import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -23,7 +25,20 @@ func ConnectDB() (*pgxpool.Pool, error) {
 
 // InitializeDB initialiserar databasen
 func InitializeDB(conn *pgxpool.Pool) {
-	// Lägg till eventuell initialisering av databasen här
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := conn.Exec(ctx, `
+        CREATE TABLE IF NOT EXISTS stocks (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            price DECIMAL(10, 2) NOT NULL,
+            symbol VARCHAR(10) NOT NULL
+        )
+    `)
+	if err != nil {
+		log.Printf("Unable to create table: %v\n", err)
+	}
 }
 
 // StockExists kontrollerar om en aktie med samma namn eller symbol redan finns i databasen

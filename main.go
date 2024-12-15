@@ -27,10 +27,11 @@ func main() {
 	// Skapa en ny Gin-router
 	r := gin.Default()
 
+	// Apply CORS middleware before defining routes
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type"},
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"*"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
@@ -50,6 +51,24 @@ func main() {
 	r.DELETE("/deletestock", handlers.DeleteStock)
 	r.GET("/healthz", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
+	})
+	r.GET("/debug", func(c *gin.Context) {
+		log.Println("Debug route called")
+		log.Println("Request headers:", c.Request.Header)
+		c.JSON(200, gin.H{
+			"message": "Debug successful",
+			"headers": c.Request.Header,
+		})
+	})
+
+	// Log all requests and responses for debugging
+	r.Use(func(c *gin.Context) {
+		log.Println("Request URL:", c.Request.URL)
+		log.Println("Request Method:", c.Request.Method)
+		log.Println("Request Headers:", c.Request.Header)
+		c.Next()
+		log.Println("Response Status:", c.Writer.Status())
+		log.Println("Response Headers:", c.Writer.Header())
 	})
 
 	// Starta webbservern på port 8085

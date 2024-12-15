@@ -1,0 +1,4 @@
+redis:
+  server: "myredisserver1:6379" 
+
+  

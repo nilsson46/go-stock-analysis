@@ -8,7 +8,8 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-// AddStock lägger till en ny aktie
+// AddStock adds a new stock
+// AddStock adds a new stock
 func AddStock(c *gin.Context) {
 	conn := c.MustGet("db").(*pgxpool.Pool)
 	var stock struct {
@@ -22,13 +23,11 @@ func AddStock(c *gin.Context) {
 		return
 	}
 
-	// Kontrollera att alla parametrar är fyllda
 	if stock.Name == "" || stock.Symbol == "" || stock.Price == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
 		return
 	}
 
-	// Kontrollera om namnet eller symbolen redan finns i databasen
 	exists, err := database.StockExists(conn, stock.Name, stock.Symbol)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -49,7 +48,7 @@ func AddStock(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Stock added successfully"})
 }
 
-// GetStock hämtar en specifik aktie baserat på dess namn eller symbol
+// GetStock retrieves a specific stock by its name or symbol
 func GetStock(c *gin.Context) {
 	conn := c.MustGet("db").(*pgxpool.Pool)
 	name := c.Query("name")
@@ -74,7 +73,7 @@ func GetStock(c *gin.Context) {
 	c.JSON(http.StatusOK, stock)
 }
 
-// GetAllStocks hämtar alla aktier från databasen
+// GetAllStocks retrieves all stocks from the database
 func GetAllStocks(c *gin.Context) {
 	conn := c.MustGet("db").(*pgxpool.Pool)
 	stocks, err := database.GetStocksFromDB(conn)
@@ -85,7 +84,7 @@ func GetAllStocks(c *gin.Context) {
 	c.JSON(http.StatusOK, stocks)
 }
 
-// DeleteStock tar bort en aktie baserat på dess namn eller symbol
+// DeleteStock deletes a stock by its name or symbol
 func DeleteStock(c *gin.Context) {
 	conn := c.MustGet("db").(*pgxpool.Pool)
 	name := c.Query("name")
