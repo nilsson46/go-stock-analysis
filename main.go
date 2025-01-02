@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	// "github.com/gin-contrib/sessions/redis"
 )
 
 func main() {
@@ -70,6 +71,8 @@ func main() {
 		log.Println("Response Status:", c.Writer.Status())
 		log.Println("Response Headers:", c.Writer.Header())
 	})
+
+	//store, _ := redis.NewStore(10, "tcp", config.Redis.Server, "", secret)
 
 	// Starta webbservern på port 8085
 	r.Run(":8085")

@@ -7,8 +7,17 @@ import (
 	"os"
 	"time"
 
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
+
+type DB interface {
+	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+	Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error)
+	Close()
+}
 
 // ConnectDB ansluter till PostgreSQL-databasen
 func ConnectDB() (*pgxpool.Pool, error) {
