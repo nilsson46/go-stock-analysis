@@ -19,8 +19,16 @@ type DB interface {
 	Close()
 }
 
+type SQLDB struct {
+	*pgxpool.Pool
+}
+
+func (db *SQLDB) Close() {
+	db.Pool.Close()
+}
+
 // ConnectDB ansluter till PostgreSQL-databasen
-func ConnectDB() (*pgxpool.Pool, error) {
+func ConnectDB() (*SQLDB, error) {
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
 		log.Fatalf("DATABASE_URL is not set")
@@ -29,11 +37,11 @@ func ConnectDB() (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, err
 	}
-	return conn, nil
+	return &SQLDB{conn}, nil
 }
 
 // InitializeDB initialiserar databasen
-func InitializeDB(conn *pgxpool.Pool) {
+func InitializeDB(conn DB) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -51,7 +59,7 @@ func InitializeDB(conn *pgxpool.Pool) {
 }
 
 // StockExists kontrollerar om en aktie med samma namn eller symbol redan finns i databasen
-func StockExists(conn *pgxpool.Pool, name, symbol string) (bool, error) {
+func StockExists(conn DB, name, symbol string) (bool, error) {
 	var exists bool
 	query := `SELECT EXISTS(SELECT 1 FROM stocks WHERE name=$1 OR symbol=$2)`
 	err := conn.QueryRow(context.Background(), query, name, symbol).Scan(&exists)
@@ -62,20 +70,24 @@ func StockExists(conn *pgxpool.Pool, name, symbol string) (bool, error) {
 }
 
 // AddStock lägger till en ny aktie i databasen
-func AddStock(conn *pgxpool.Pool, name string, price float64, symbol string) error {
-	query := `INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`
-	_, err := conn.Exec(context.Background(), query, name, price, symbol)
+func AddStock(conn DB, name string, price float64, symbol string) error {
+	_, err := conn.Exec(context.Background(),
+		`INSERT INTO stocks (name, price, symbol) VALUES ($1, $2, $3)`,
+		name, price, symbol,
+	)
 	if err != nil {
 		log.Printf("Error adding stock: %v", err)
+		return err
 	}
-	return err
+	return nil
 }
 
 // GetStock hämtar en specifik aktie baserat på dess namn eller symbol
-func GetStock(conn *pgxpool.Pool, name, symbol string) (map[string]interface{}, error) {
+func GetStock(conn DB, name, symbol string) (map[string]interface{}, error) {
 	var stock map[string]interface{}
 	query := `SELECT name, price, symbol FROM stocks WHERE name=$1 OR symbol=$2`
 	row := conn.QueryRow(context.Background(), query, name, symbol)
+
 	var stockName string
 	var stockPrice float64
 	var stockSymbol string
@@ -83,6 +95,7 @@ func GetStock(conn *pgxpool.Pool, name, symbol string) (map[string]interface{}, 
 	if err != nil {
 		return nil, err
 	}
+
 	stock = map[string]interface{}{
 		"name":   stockName,
 		"price":  stockPrice,
@@ -92,7 +105,7 @@ func GetStock(conn *pgxpool.Pool, name, symbol string) (map[string]interface{}, 
 }
 
 // GetStocksFromDB hämtar alla aktier från databasen
-func GetStocksFromDB(conn *pgxpool.Pool) ([]map[string]interface{}, error) {
+func GetStocksFromDB(conn DB) ([]map[string]interface{}, error) {
 	rows, err := conn.Query(context.Background(), "SELECT name, price, symbol FROM stocks")
 	if err != nil {
 		return nil, err
@@ -118,7 +131,7 @@ func GetStocksFromDB(conn *pgxpool.Pool) ([]map[string]interface{}, error) {
 }
 
 // DeleteStock tar bort en aktie från databasen
-func DeleteStock(conn *pgxpool.Pool, name, symbol string) error {
+func DeleteStock(conn DB, name, symbol string) error {
 	query := `DELETE FROM stocks WHERE name=$1 OR symbol=$2`
 	_, err := conn.Exec(context.Background(), query, name, symbol)
 	if err != nil {

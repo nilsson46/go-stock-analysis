@@ -2,16 +2,15 @@ package handlers
 
 import (
 	"go-stock-analysis/database"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 // AddStock adds a new stock
-// AddStock adds a new stock
 func AddStock(c *gin.Context) {
-	conn := c.MustGet("db").(*pgxpool.Pool)
+	db := c.MustGet("db").(database.DB)
 	var stock struct {
 		Name   string  `json:"name"`
 		Price  float64 `json:"price"`
@@ -19,38 +18,44 @@ func AddStock(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&stock); err != nil {
+		log.Println("Error binding JSON:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
 
 	if stock.Name == "" || stock.Symbol == "" || stock.Price == 0 {
+		log.Println("Missing fields in request payload")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
 		return
 	}
 
-	exists, err := database.StockExists(conn, stock.Name, stock.Symbol)
+	exists, err := database.StockExists(db, stock.Name, stock.Symbol)
 	if err != nil {
+		log.Println("Error checking if stock exists:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if exists {
+		log.Println("Stock already exists")
 		c.JSON(http.StatusConflict, gin.H{"error": "Stock with the same name or symbol already exists"})
 		return
 	}
 
-	err = database.AddStock(conn, stock.Name, stock.Price, stock.Symbol)
+	err = database.AddStock(db, stock.Name, stock.Price, stock.Symbol)
 	if err != nil {
+		log.Println("Error adding stock:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	log.Println("Stock added successfully")
 	c.JSON(http.StatusOK, gin.H{"message": "Stock added successfully"})
 }
 
 // GetStock retrieves a specific stock by its name or symbol
 func GetStock(c *gin.Context) {
-	conn := c.MustGet("db").(*pgxpool.Pool)
+	db := c.MustGet("db").(database.DB)
 	name := c.Query("name")
 	symbol := c.Query("symbol")
 
@@ -59,7 +64,7 @@ func GetStock(c *gin.Context) {
 		return
 	}
 
-	stock, err := database.GetStock(conn, name, symbol)
+	stock, err := database.GetStock(db, name, symbol)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -75,8 +80,8 @@ func GetStock(c *gin.Context) {
 
 // GetAllStocks retrieves all stocks from the database
 func GetAllStocks(c *gin.Context) {
-	conn := c.MustGet("db").(*pgxpool.Pool)
-	stocks, err := database.GetStocksFromDB(conn)
+	db := c.MustGet("db").(database.DB)
+	stocks, err := database.GetStocksFromDB(db)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -86,7 +91,7 @@ func GetAllStocks(c *gin.Context) {
 
 // DeleteStock deletes a stock by its name or symbol
 func DeleteStock(c *gin.Context) {
-	conn := c.MustGet("db").(*pgxpool.Pool)
+	db := c.MustGet("db").(database.DB)
 	name := c.Query("name")
 	symbol := c.Query("symbol")
 
@@ -95,7 +100,7 @@ func DeleteStock(c *gin.Context) {
 		return
 	}
 
-	err := database.DeleteStock(conn, name, symbol)
+	err := database.DeleteStock(db, name, symbol)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
