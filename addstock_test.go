@@ -11,12 +11,21 @@ import (
 	"go-stock-analysis/database"
 
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_When_Adding_A_New_Stock(t *testing.T) {
 	// Arrange
 	mockDB := &database.MockDB{
+		QueryRowFunc: func(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+			return &database.MockRow{
+				ScanFunc: func(dest ...interface{}) error {
+					*dest[0].(*bool) = false
+					return nil
+				},
+			}
+		},
 		ExecFunc: func(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
 			return pgconn.CommandTag{}, nil
 		},

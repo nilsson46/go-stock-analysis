@@ -18,7 +18,7 @@ func (m *MockDB) QueryRow(ctx context.Context, sql string, args ...interface{}) 
 	if m.QueryRowFunc != nil {
 		return m.QueryRowFunc(ctx, sql, args...)
 	}
-	return nil
+	return &MockRow{}
 }
 
 func (m *MockDB) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
@@ -39,4 +39,15 @@ func (m *MockDB) Close() {
 	if m.CloseFunc != nil {
 		m.CloseFunc()
 	}
+}
+
+type MockRow struct {
+	ScanFunc func(dest ...interface{}) error
+}
+
+func (r *MockRow) Scan(dest ...interface{}) error {
+	if r.ScanFunc != nil {
+		return r.ScanFunc(dest...)
+	}
+	return nil
 }
