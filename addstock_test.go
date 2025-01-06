@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -21,9 +23,18 @@ func Test_When_Adding_A_New_Stock(t *testing.T) {
 	}
 	router := setupRouter(mockDB)
 
+	// Skapa en JSON-payload för POST-begäran
+	stock := map[string]interface{}{
+		"name":   "Test Stock",
+		"price":  100.0,
+		"symbol": "TST",
+	}
+	jsonValue, _ := json.Marshal(stock)
+
 	// Act
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/addstock", nil)
+	req, _ := http.NewRequest("POST", "/addstock", bytes.NewBuffer(jsonValue))
+	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	// Assert
