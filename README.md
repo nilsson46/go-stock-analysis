@@ -1,3 +1,33 @@
+
+
+**Översikt**
+
+Backend-applikationen är en RESTful API-tjänst byggd med Go och Gin-ramverket. Applikationen hanterar aktieinformation och erbjuder funktioner för att lägga till, hämta, uppdatera och ta bort aktier.
+
+**Komponenter**
+
+Gin-ramverket: Används för att skapa RESTful API-endpoints.
+PostgreSQL: Används som databas för att lagra aktieinformation.
+Redis: Används för sessionhantering. Dock inte implementerade ännu. 
+Docker: Används för att containerisera applikationen.
+Kubernetes: Används för att orkestrera och hantera containeriserade applikationer.
+GitHub Actions: Används för CI/CD-pipeline. 
+
+**Api-Endpoints** 
+
+
+
+![endpoints-stock](https://github.com/user-attachments/assets/36437c84-0625-4ac5-b176-eb1b5244a6e4) 
+
+
+
+
+
+GitHub Actions Workflow
+GitHub Actions används för att automatisera byggning, testning och distribution av applikationen. Tanken är att vid varje push till main så körs docker-publish filen och om tester och bygget går igenom så pushar en ny image upp till kubernetes. Kubernetes ligger och kollar efter uppdateringar kontinuerligt så att den tar den nya imagen och uppdaterar. 
+
+
+
 Scraping could be a option... 
 
 Start to add some manually to the db or in the frontend later on. 
@@ -31,33 +61,3 @@ docker-compose up
 
 
 docker build -t simonnilsson584/backend:latest .
-
-**Översikt**
-
-Backend-applikationen är en RESTful API-tjänst byggd med Go och Gin-ramverket. Applikationen hanterar aktieinformation och erbjuder funktioner för att lägga till, hämta, uppdatera och ta bort aktier.
-
-**Komponenter**
-
-Gin-ramverket: Används för att skapa RESTful API-endpoints.
-PostgreSQL: Används som databas för att lagra aktieinformation.
-Redis: Används för sessionhantering. Dock inte implementerade ännu. 
-Docker: Används för att containerisera applikationen.
-Kubernetes: Används för att orkestrera och hantera containeriserade applikationer.
-GitHub Actions: Används för CI/CD-pipeline. 
-
-**Api-Endpoints** 
-
-
-
-![endpoints-stock](https://github.com/user-attachments/assets/36437c84-0625-4ac5-b176-eb1b5244a6e4) 
-
-
-
-
-
-GitHub Actions Workflow
-GitHub Actions används för att automatisera byggning, testning och distribution av applikationen. Tanken är att vid varje push till main så körs docker-publish filen och om tester och bygget går igenom så pushar en ny image upp till kubernetes. Kubernetes ligger och kollar efter uppdateringar kontinuerligt så att den tar den nya imagen och uppdaterar. 
-
-
-
-
