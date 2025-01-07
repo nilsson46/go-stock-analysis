@@ -33,9 +33,11 @@ docker-compose up
 docker build -t simonnilsson584/backend:latest .
 
 **Översikt**
+
 Backend-applikationen är en RESTful API-tjänst byggd med Go och Gin-ramverket. Applikationen hanterar aktieinformation och erbjuder funktioner för att lägga till, hämta, uppdatera och ta bort aktier.
 
 **Komponenter**
+
 Gin-ramverket: Används för att skapa RESTful API-endpoints.
 PostgreSQL: Används som databas för att lagra aktieinformation.
 Redis: Används för sessionhantering. Dock inte implementerade ännu. 
