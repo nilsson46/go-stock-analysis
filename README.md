@@ -23,11 +23,11 @@ GitHub Actions: Används för CI/CD-pipeline.
 
 
 
-GitHub Actions Workflow
+**Flödet**
 GitHub Actions används för att automatisera byggning, testning och distribution av applikationen. Tanken är att vid varje push till main så körs docker-publish filen och om tester och bygget går igenom så pushar en ny image upp till kubernetes. Kubernetes ligger och kollar efter uppdateringar kontinuerligt så att den tar den nya imagen och uppdaterar. 
 
 
-
+*******************************************************************************
 Scraping could be a option... 
 
 Start to add some manually to the db or in the frontend later on. 
