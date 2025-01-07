@@ -44,8 +44,17 @@ Kubernetes: Används för att orkestrera och hantera containeriserade applikatio
 GitHub Actions: Används för CI/CD-pipeline. 
 
 Api-Endpoints 
+
+
+
 ![endpoints-stock](https://github.com/user-attachments/assets/36437c84-0625-4ac5-b176-eb1b5244a6e4) 
 
+
+
+
+
+GitHub Actions Workflow
+GitHub Actions används för att automatisera byggning, testning och distribution av applikationen. Tanken är att vid varje push till main så körs docker-publish filen och om tester och bygget går igenom så pushar en ny image upp till kubernetes. Kubernetes ligger och kollar efter uppdateringar kontinuerligt så att den tar den nya imagen och uppdaterar. 
 
 
 
