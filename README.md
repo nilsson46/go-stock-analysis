@@ -2,7 +2,7 @@
 
 **Översikt**
 
-Backend-applikationen är en RESTful API-tjänst byggd med Go och Gin-ramverket. Applikationen hanterar aktieinformation och erbjuder funktioner för att lägga till, hämta, uppdatera och ta bort aktier.
+Backend-applikationen är en RESTful API-tjänst byggd med Go och Gin-ramverket. Applikationen hanterar aktieinformation och erbjuder funktioner för att lägga till, hämta, uppdatera och ta bort aktier. Appen ligger just nu och snurrar på http://stock.strangled.net/ 
 
 **Komponenter**
 
@@ -24,7 +24,7 @@ GitHub Actions: Används för CI/CD-pipeline.
 
 
 **Flödet**
-GitHub Actions används för att automatisera byggning, testning och distribution av applikationen. Tanken är att vid varje push till main så körs docker-publish filen och om tester och bygget går igenom så pushar en ny image upp till kubernetes. Kubernetes ligger och kollar efter uppdateringar kontinuerligt så att den tar den nya imagen och uppdaterar. 
+GitHub Actions används för att automatisera byggning, testning och distribution av applikationen. Vid varje push till main så körs docker-publish filen och om tester och bygget går igenom så pushar en ny image upp till kubernetes. Kubernetes ligger och kollar efter nya images kontinuerligt så att den tar den nya imagen och uppdaterar. Så när imagen är skapad så startas backend podden med den nya imagen och rullar sedan på. 
 
 
 *******************************************************************************
