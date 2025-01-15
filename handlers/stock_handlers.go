@@ -107,3 +107,34 @@ func DeleteStock(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Stock deleted successfully"})
 }
+
+// UpdateStockPrice updates the price of a stock by its symbol
+func UpdateStockPrice(c *gin.Context) {
+	db := c.MustGet("db").(database.DB)
+	var request struct {
+		Symbol   string  `json:"symbol"`
+		NewPrice float64 `json:"new_price"`
+	}
+
+	if err := c.BindJSON(&request); err != nil {
+		log.Println("Error binding JSON:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	if request.Symbol == "" || request.NewPrice == 0 {
+		log.Println("Missing fields in request payload")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Symbol and new price are required"})
+		return
+	}
+
+	err := database.UpdateStockPrice(db, request.Symbol, request.NewPrice)
+	if err != nil {
+		log.Println("Error updating stock price:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	log.Println("Stock price updated successfully")
+	c.JSON(http.StatusOK, gin.H{"message": "Stock price updated successfully"})
+}

@@ -136,3 +136,14 @@ func DeleteStockBySymbol(db DB, symbol string) error {
 	_, err := db.Exec(context.Background(), query, symbol)
 	return err
 }
+
+// UpdateStockPrice uppdaterar priset på en aktie baserat på dess symbol
+func UpdateStockPrice(db DB, symbol string, newPrice float64) error {
+	query := "UPDATE stocks SET price = $1 WHERE symbol = $2"
+	_, err := db.Exec(context.Background(), query, newPrice, symbol)
+	if err != nil {
+		log.Printf("Error updating stock price: %v", err)
+		return err
+	}
+	return nil
+}
