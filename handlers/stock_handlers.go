@@ -89,18 +89,17 @@ func GetAllStocks(c *gin.Context) {
 	c.JSON(http.StatusOK, stocks)
 }
 
-// DeleteStock deletes a stock by its name or symbol
+// DeleteStock deletes a stock by its symbol
 func DeleteStock(c *gin.Context) {
 	db := c.MustGet("db").(database.DB)
-	name := c.Query("name")
-	symbol := c.Query("symbol")
+	symbol := c.Param("symbol")
 
-	if name == "" && symbol == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Name or symbol is required"})
+	if symbol == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Symbol is required"})
 		return
 	}
 
-	err := database.DeleteStock(db, name, symbol)
+	err := database.DeleteStockBySymbol(db, symbol)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
