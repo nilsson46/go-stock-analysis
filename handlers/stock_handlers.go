@@ -92,7 +92,7 @@ func GetAllStocks(c *gin.Context) {
 // DeleteStock deletes a stock by its symbol
 func DeleteStock(c *gin.Context) {
 	db := c.MustGet("db").(database.DB)
-	symbol := c.Param("symbol")
+	symbol := c.Query("symbol")
 
 	if symbol == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Symbol is required"})

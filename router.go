@@ -36,6 +36,8 @@ func setupRouter(db database.DB) *gin.Engine {
 	r.POST("/addstock", handlers.AddStock)
 	r.GET("/getstock", handlers.GetStock)
 	r.DELETE("/deletestock", handlers.DeleteStock)
+	r.DELETE("/deletestock/:symbol", handlers.DeleteStock)
+	r.DELETE("/deletestock", handlers.DeleteStock)
 	r.GET("/healthz", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
