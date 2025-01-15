@@ -31,3 +31,15 @@ docker-compose up
 
 
 docker build -t simonnilsson584/backend:latest .
+
+Efter lektionen 12/9. 
+Memstore, 
+session, 
+cokies, 
+redis, 
+login, 
+userdb?, 
+yalongsite-1 
+
+current state måste ligga utanför sessionstorage för att kunna behållas/inte loggas ut varje gång replican byts. 
+Det enda som vi vill ha är key-value. Redis är då det bästa valet. 
