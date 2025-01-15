@@ -131,11 +131,8 @@ func GetStocksFromDB(conn DB) ([]map[string]interface{}, error) {
 }
 
 // DeleteStock tar bort en aktie från databasen
-func DeleteStockBySymbol(conn DB, symbol string) error {
-	query := `DELETE FROM stocks WHERE name=$1 OR symbol=$2`
-	_, err := conn.Exec(context.Background(), query, symbol)
-	if err != nil {
-		log.Printf("Error deleting stock: %v", err)
-	}
+func DeleteStockBySymbol(db DB, symbol string) error {
+	query := "DELETE FROM stocks WHERE symbol = $1"
+	_, err := db.Exec(query, symbol)
 	return err
 }
