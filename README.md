@@ -1,13 +1,38 @@
+
+
+**Översikt**
+
+Backend-applikationen är en RESTful API-tjänst byggd med Go och Gin-ramverket. Applikationen hanterar aktieinformation och erbjuder funktioner för att lägga till, hämta, uppdatera och ta bort aktier. Appen ligger just nu och snurrar på http://stock.strangled.net/ 
+
+**Komponenter**
+
+Gin-ramverket: Används för att skapa RESTful API-endpoints.
+PostgreSQL: Används som databas för att lagra aktieinformation.
+Redis: Används för sessionhantering. Dock inte implementerade ännu. 
+Docker: Används för att containerisera applikationen.
+Kubernetes: Används för att orkestrera och hantera containeriserade applikationer.
+GitHub Actions: Används för CI/CD-pipeline. 
+
+**Api-Endpoints** 
+
+
+
+![endpoints-stock](https://github.com/user-attachments/assets/36437c84-0625-4ac5-b176-eb1b5244a6e4) 
+
+
+
+
+
+**Flödet**
+GitHub Actions används för att automatisera byggning, testning och distribution av applikationen. Vid varje push till main så körs docker-publish filen och om tester och bygget går igenom så pushar en ny image upp till kubernetes. Kubernetes ligger och kollar efter nya images kontinuerligt så att den tar den nya imagen och uppdaterar. Så när imagen är skapad så startas backend podden med den nya imagen och rullar sedan på. 
+
+
+*******************************************************************************
 Scraping could be a option... 
 
 Start to add some manually to the db or in the frontend later on. 
  TODO 
 
- buildspec.yaml? 
-
-För att köra commando med docker?
-
-För att köra tester så lägger vi till dom i dockerfilen. RUN go test. 
 
 Kubectl commands: 
 kubectl --kubeconfig=.\kubeconfig.yaml apply -f .\namespace.yaml 
@@ -31,15 +56,3 @@ docker-compose up
 
 
 docker build -t simonnilsson584/backend:latest .
-
-Efter lektionen 12/9. 
-Memstore, 
-session, 
-cokies, 
-redis, 
-login, 
-userdb?, 
-yalongsite-1 
-
-current state måste ligga utanför sessionstorage för att kunna behållas/inte loggas ut varje gång replican byts. 
-Det enda som vi vill ha är key-value. Redis är då det bästa valet. 
